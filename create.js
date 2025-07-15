@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 import { execSync } from 'node:child_process';
 import { cpSync, renameSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// ESM‑safe __dirname
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const [, , appName = 'my-app'] = process.argv;
 
@@ -10,7 +14,7 @@ console.log(`\n✨  Creating ${appName} from Vercel TS + Pass template…`);
 /* ------------------------------------------------------------------ */
 /* Copy template files                                                */
 /* ------------------------------------------------------------------ */
-cpSync(join(import.meta.dirname, 'template'), appName, { recursive: true });
+cpSync(join(__dirname, 'template'), appName, { recursive: true });
 
 /* Rename gitignore -> .gitignore (kept out of npm) */
 const gitignore = join(appName, 'gitignore');
