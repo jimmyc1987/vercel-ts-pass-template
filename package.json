@@ -1,0 +1,9 @@
+{
+  "name": "create-vercel-pass",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": {
+    "create-vercel-pass": "./create.js"
+  },
+  "license": "MIT"
+}
