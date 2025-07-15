@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { execSync } from 'node:child_process';
+import { execSync, spawnSync } from 'node:child_process';
 import { cpSync, renameSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,9 +29,11 @@ const tryRun = cmd => {
   catch { return false; }
 };
 
-if (!tryRun('pnpm install'))
-  if (!tryRun('yarn install --ignore-engines'))
-    tryRun('npm install');
+const has = bin => spawnSync('command', ['-v', bin]).status === 0;
+
+if (has('pnpm') && tryRun('pnpm install')) { /* done */ }
+else if (has('yarn') && tryRun('yarn install --ignore-engines')) { /* done */ }
+else tryRun('npm install --legacy-peer-deps');
 
 /* ------------------------------------------------------------------ */
 /* Init shadcn/ui + example button                                    */
