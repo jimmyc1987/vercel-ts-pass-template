@@ -1,29 +1,44 @@
 #!/usr/bin/env node
-import {{ execSync }} from 'node:child_process';
-import {{ cpSync, renameSync }} from 'node:fs';
-import {{ join }} from 'node:path';
+import { execSync } from 'node:child_process';
+import { cpSync, renameSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 
-const [,, appName = 'my-app'] = process.argv;
+const [, , appName = 'my-app'] = process.argv;
+
 console.log(`\n✨  Creating ${appName} from Vercel TS + Pass template…`);
 
-cpSync(join(import.meta.dirname, 'template'), appName, {{ recursive: true }});
+/* ------------------------------------------------------------------ */
+/* Copy template files                                                */
+/* ------------------------------------------------------------------ */
+cpSync(join(import.meta.dirname, 'template'), appName, { recursive: true });
 
-// Rename gitignore -> .gitignore (kept out of npm)
-try {{
-  renameSync(join(appName, 'gitignore'), join(appName, '.gitignore'));
-}} catch (err) {{
-  console.warn('gitignore rename skipped:', err.message);
-}}
+/* Rename gitignore -> .gitignore (kept out of npm) */
+const gitignore = join(appName, 'gitignore');
+if (existsSync(gitignore)) renameSync(gitignore, join(appName, '.gitignore'));
 
-// install deps (tries pnpm → yarn → npm)
-execSync(`cd ${appName} && (pnpm install || true)`, {{ stdio: 'inherit' }});
-execSync(`cd ${appName} && (yarn --ignore-engines || true)`, {{ stdio: 'inherit' }});
-execSync(`cd ${appName} && npm install`, {{ stdio: 'inherit' }});
+/* ------------------------------------------------------------------ */
+/* Install dependencies (tries pnpm ➜ yarn ➜ npm)                     */
+/* ------------------------------------------------------------------ */
+process.chdir(appName);
+const tryRun = cmd => {
+  try { execSync(cmd, { stdio: 'inherit' }); return true; }
+  catch { return false; }
+};
 
-// initialise shadcn/ui and add a default button component
-execSync(`cd ${appName} && npx shadcn@latest init -y`, {{ stdio: 'inherit' }});
-execSync(`cd ${appName} && npx shadcn add button`, {{ stdio: 'inherit' }});
+if (!tryRun('pnpm install'))
+  if (!tryRun('yarn install --ignore-engines'))
+    tryRun('npm install');
 
-console.log(`\n✅  Done!  Next steps:
-   cd ${appName}
-   pnpm dev   # or yarn dev / npm run dev`);
+/* ------------------------------------------------------------------ */
+/* Init shadcn/ui + example button                                    */
+/* ------------------------------------------------------------------ */
+execSync('npx shadcn@latest init -y', { stdio: 'inherit' });
+execSync('npx shadcn add button', { stdio: 'inherit' });
+
+console.log(`
+✅  Done!
+
+Next steps:
+  cd ${appName}
+  pnpm dev   # or yarn dev / npm run dev
+`);
